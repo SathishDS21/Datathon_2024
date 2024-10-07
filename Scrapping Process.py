@@ -12,11 +12,9 @@ import logging
 from tqdm import tqdm
 import time
 
-# ScraperAPI base URL
-SCRAPER_API_KEY = '21968e6dd31dc8400bb03dd3792c2657'  # Replace with your ScraperAPI key
+SCRAPER_API_KEY = '21968e6dd31dc8400bb03dd3792c2657'
 SCRAPER_API_URL = f"http://api.scraperapi.com/?api_key={SCRAPER_API_KEY}&url="
 
-# Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def clean_text(text):
