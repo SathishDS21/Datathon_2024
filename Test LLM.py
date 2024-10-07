@@ -14,9 +14,8 @@ def train_model(excel_file_path, model_output_dir):
     categories = data['category']
 
     label_encoder = LabelEncoder()
-    encoded_categories = label_encoder.fit_transform(categories)  # Convert categories to numerical values
-
-    vectorizer = TfidfVectorizer(max_features=5000)  # Limit the vocabulary size to 5000 most common words
+    encoded_categories = label_encoder.fit_transform(categories) 
+    vectorizer = TfidfVectorizer(max_features=5000)
     X = vectorizer.fit_transform(summaries)
 
     X_train, X_test, y_train, y_test = train_test_split(X, encoded_categories, test_size=0.2, random_state=42)
