@@ -1,60 +1,9 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+# pip install zenrows
+from zenrows import ZenRowsClient
 
+client = ZenRowsClient("ee5e305a575bb3c45664a84d5ab6d49a388bfb44")
+url = "https://www.reuters.com/markets/europe/markets-jury-still-out-french-belt-tightening-plan-2024-10-11/"
 
-# Function to scrape content using Selenium
-def scrape_with_selenium(url):
-    # Set up the Chrome WebDriver with necessary options
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Run in headless mode (no GUI)
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
+response = client.get(url)
 
-    # Initialize the WebDriver
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
-    try:
-        # Open the page
-        driver.get(url)
-
-        # Wait for the headline to be present (Use an appropriate selector, e.g., By.CSS_SELECTOR or By.XPATH)
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.TAG_NAME, 'h1'))
-        )
-
-        # Extract headline (use another strategy if h1 isn't found)
-        headline = driver.find_element(By.TAG_NAME, 'h1').text
-
-        # Wait for the article body content to be present (adjust if necessary)
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, 'article-body__content'))
-        )
-
-        # Extract article content
-        article_body = driver.find_element(By.CLASS_NAME, 'article-body__content').text
-
-        return headline, article_body
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    finally:
-        driver.quit()
-
-    return None
-
-
-# Example usage
-if __name__ == "__main__":
-    url = 'https://www.reuters.com/technology/teslas-musk-unveil-robotaxis-amid-fanfare-skepticism-2024-10-10/'
-    result = scrape_with_selenium(url)
-
-    if result:
-        headline, article_text = result
-        print("Headline:", headline)
-        print("\nArticle Text:", article_text)
-    else:
-        print("Failed to scrape the content.")
+print(response.text)
