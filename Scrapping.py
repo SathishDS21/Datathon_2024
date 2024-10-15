@@ -1,60 +1,47 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
+from bs4 import BeautifulSoup  # Add BeautifulSoup for parsing
+import time
 
 
-# Function to scrape content using Selenium
 def scrape_with_selenium(url):
-    # Set up the Chrome WebDriver with necessary options
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Run in headless mode (no GUI)
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
+    # Set up Selenium with Firefox in headless mode
+    options = Options()
+    options.headless = True
 
-    # Initialize the WebDriver
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    # Set the correct binary location of Firefox on your system
+    options.binary_location = '/Applications/Firefox.app/Contents/MacOS/firefox'  # Update this path for your system
+
+    # Update this path to the location where geckodriver is installed on your machine
+    service = Service(executable_path='/Users/sathishm/Documents/TSM Folder/Datathon Stage 2/geckodriver')
+
+    driver = webdriver.Firefox(service=service, options=options)
 
     try:
-        # Open the page
+        # Open the article URL
         driver.get(url)
+        time.sleep(5)  # Wait for the page to load fully
 
-        # Wait for the headline to be present (Use an appropriate selector, e.g., By.CSS_SELECTOR or By.XPATH)
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.TAG_NAME, 'h1'))
-        )
+        # Scrape the content using BeautifulSoup
+        page_source = driver.page_source
+        soup = BeautifulSoup(page_source, 'html.parser')
 
-        # Extract headline (use another strategy if h1 isn't found)
-        headline = driver.find_element(By.TAG_NAME, 'h1').text
+        # Extract title
+        title = soup.find('title').text
+        print(f"Title: {title}")
 
-        # Wait for the article body content to be present (adjust if necessary)
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, 'article-body__content'))
-        )
-
-        # Extract article content
-        article_body = driver.find_element(By.CLASS_NAME, 'article-body__content').text
-
-        return headline, article_body
+        # Extract the article text (adjust based on page structure)
+        article_body = " ".join([p.text for p in soup.find_all('p')])
+        print(f"Body: {article_body[:500]}...")  # Print first 500 characters
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Error during scraping: {e}")
     finally:
         driver.quit()
 
-    return None
 
-
-# Example usage
-if __name__ == "__main__":
-    url = 'https://timesofindia.indiatimes.com'
-    result = scrape_with_selenium(url)
-
-    if result:
-        headline, article_text = result
-        print("Headline:", headline)
-        print("\nArticle Text:", article_text)
-    else:
-        print("Failed to scrape the content.")
+# Prompt user for input
+url = input("Enter a Reuters article link: ")
+scrape_with_selenium(url)
