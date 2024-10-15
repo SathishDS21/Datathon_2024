@@ -49,7 +49,7 @@ def scrape_with_selenium(url):
 
 # Example usage
 if __name__ == "__main__":
-    url = 'https://www.reuters.com/technology/teslas-musk-unveil-robotaxis-amid-fanfare-skepticism-2024-10-10/'
+    url = 'https://timesofindia.indiatimes.com'
     result = scrape_with_selenium(url)
 
     if result:
