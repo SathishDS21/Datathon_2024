@@ -13,3 +13,10 @@ To avoid scraping ads, you can:
 	8.	SerpAPI – Specializes in scraping search engine results pages (SERPs).
 	9.	Diffbot – Uses AI to extract structured data from web pages.
 	10.	DataMiner – Offers a scraping API for accessing data through browser extensions.
+
+
+Random User-Agent rotation using the fake-useragent package.
+	2.	Randomized delays between requests.
+	3.	Headful browser mode to appear more like a real user.
+	4.	Rotating proxies to avoid IP-based rate-limiting.
+	5.	Retrying different approaches if one fails.

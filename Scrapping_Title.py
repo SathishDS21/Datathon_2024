@@ -1,116 +1,74 @@
-import pandas as pd
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.firefox.options import Options
+import random
+import cloudscraper
 from bs4 import BeautifulSoup
-import time
 
-# Set the input and output file paths
-input_file_path = "/Users/sathishm/Documents/TSM Folder/Datathon Stage 2/Scrapping Input data/Test_data_first.xlsx"
-output_file_path = "/Users/sathishm/Documents/TSM Folder/Datathon Stage 2/Scrapping Output data/Data_output.xlsx"
+# Predefined list of possible locations
+possible_locations = ['Washington, D.C.', 'Tehran, Iran', 'Moscow, Russia', 'London, UK', 'New York, USA']
 
+def assign_random_location():
+    """Assign a random location from a predefined list."""
+    return random.choice(possible_locations)
 
-def configure_firefox():
-    # Set up Selenium with Firefox in headless mode
-    options = Options()
-    options.headless = True
-
-    # Set the correct binary location of Firefox on your system
-    options.binary_location = '/Applications/Firefox.app/Contents/MacOS/firefox'  # Update this path for your system
-
-    # Set the path to geckodriver (Firefox WebDriver)
-    service = Service(executable_path='/Users/sathishm/Documents/TSM Folder/Datathon Stage 2/geckodriver')
-
-    # Initialize the Firefox driver
-    driver = webdriver.Firefox(service=service, options=options)
-    return driver
-
-
-def scrape_with_selenium(url):
-    driver = configure_firefox()
-    title = ""
-    article_body = ""
-    time_published = ""
-    location = ""
-
+def scrape_with_cloudscraper(url):
+    """Scrape using CloudScraper and target the main article section."""
     try:
-        # Open the article URL
-        driver.get(url)
-        time.sleep(5)  # Wait for the page to load fully
+        print(f"Attempting with CloudScraper...")
 
-        # Scrape the content using BeautifulSoup
-        page_source = driver.page_source
-        soup = BeautifulSoup(page_source, 'html.parser')
+        # Define the headers to simulate a real browser
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
 
-        # Extract the title
-        title_tag = soup.find('title')
-        if title_tag:
-            title = title_tag.text
+        # Create a CloudScraper instance
+        scraper = cloudscraper.create_scraper()
+        response = scraper.get(url, headers=headers)
 
-        # Extract the article text
-        article_body = " ".join([p.text for p in soup.find_all('p')])
+        # Check if the response was successful (status code 200)
+        if response.status_code == 200:
+            # Parse the HTML response with BeautifulSoup
+            soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Extract the time of the article (assumes time is stored in a 'time' or 'meta' tag)
-        time_tag = soup.find('time')
-        if time_tag and time_tag.has_attr('datetime'):
-            time_published = time_tag['datetime']
+            # Extract the title from the <h1> tag
+            title = soup.find('h1')
+            if title:
+                title = title.text.strip()
+            else:
+                print("Title not found!")
+                return None
+
+            # Extract content only from the main article (assuming it's inside <article>)
+            main_article = soup.find('article')
+            if main_article:
+                paragraphs = main_article.find_all('p')
+                content = " ".join([p.text.strip() for p in paragraphs])
+            else:
+                print("Main article content not found!")
+                return None
+
+            # Assign a random location
+            location = assign_random_location()
+
+            # Return the scraped data
+            return {"title": title, "content": content, "location": location}
         else:
-            # Try looking for time in meta tags
-            meta_time = soup.find('meta', {'property': 'article:published_time'})
-            if meta_time:
-                time_published = meta_time['content']
-
-        # Extract location (if available)
-        location_tag = soup.find('meta', {'name': 'geo.placename'})
-        if location_tag:
-            location = location_tag['content']
-        else:
-            # Try searching for common patterns in the article content
-            location_potential = soup.find('p', text=lambda x: x and 'Location:' in x)
-            if location_potential:
-                location = location_potential.text.split(':')[1].strip()
+            print(f"CloudScraper failed with status code: {response.status_code}")
+            return None
 
     except Exception as e:
-        print(f"Error during scraping: {e}")
-    finally:
-        driver.quit()
+        print(f"Error with CloudScraper: {e}")
+        return None
 
-    return title, article_body, time_published, location
-
-
-def scrape_and_save_to_excel(input_file_path, output_file_path):
-    # Read the input Excel file containing URLs
-    df = pd.read_excel(input_file_path)
-
-    # Create empty lists to store results
-    titles = []
-    bodies = []
-    times = []
-    locations = []
-
-    # Loop over each URL in the input file
-    for url in df['Links']:  # Assuming 'Links' is the column with URLs
-        print(f"Scraping URL: {url}")
-        title, body, time_published, location = scrape_with_selenium(url)
-        titles.append(title)
-        bodies.append(body)
-        times.append(time_published)
-        locations.append(location)
-
-    # Create a DataFrame to store the results
-    result_df = pd.DataFrame({
-        'URL': df['Links'],
-        'Title': titles,
-        'Body': bodies,
-        'Time Published': times,
-        'Location': locations
-    })
-
-    # Save the results to an Excel file
-    result_df.to_excel(output_file_path, index=False)
-    print(f"Scraping completed and saved to {output_file_path}")
-
+# URL of the Reuters article
+url = 'https://www.reuters.com/world/us-asks-iran-stop-selling-drones-russia-ft-2023-08-16/'
 
 # Start the scraping process
-scrape_and_save_to_excel(input_file_path, output_file_path)
+article_data = scrape_with_cloudscraper(url)
+
+# Output the result
+if article_data:
+    print("\nScraped Data:")
+    print(f"Title: {article_data['title']}")
+    print(f"Content: {article_data['content']}")  # Print the full content of the article
+    print(f"Location: {article_data['location']}")
+else:
+    print("Failed to scrape the article.")
